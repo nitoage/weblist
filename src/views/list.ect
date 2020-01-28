@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<!-- 
+  Readme memo
+★DataTable
+  https://datatables.net/manual/installation 
+
+  資源の乗せ換えを検討
+  いまCDNなのでnpmにしなきゃだめね。
+-->
+<html>
+  <head>
+    <title>Jobステータスいじる君</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css' />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script>
+      $(document).ready( function () {
+        var table = $('#myTable').DataTable({
+          paging: false,
+          scrollY: 400
+        });
+        table.columns().flatten().each( function ( colIdx ) {
+          // Create the select list and search operation
+          var select = $('<select />')
+              .appendTo(
+                  table.column(colIdx).footer()
+              )
+              .on( 'change', function () {
+                  table
+                      .column( colIdx )
+                      .search( $(this).val() )
+                      .draw();
+              } );
+      
+          // Get the search data for the first column and add to the select list
+          table
+              .column( colIdx )
+              .cache( 'search' )
+              .sort()
+              .unique()
+              .each( function ( d ) {
+                  select.append( $('<option value="'+d+'">'+d+'</option>') );
+              } );
+        } );
+      } );
+      function rerun(target) {
+        console.log(target.id,target.value);
+        $(target).prop('disabled', true);
+        let url = "/list/rerun/" + target.id;
+        console.log(url);
+        window.location.href = url;
+      }
+    </script>
+  </head> 
+  <body>
+    <h1>Jobステータスいじる君</h1>
+
+    <div>
+      <table id="myTable" class="display">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>reRun</th>
+                <th>Table Name</th>
+                <th>Status</th>
+                <th>JobDate</th>  
+            </tr>
+        </thead>
+        <tbody>
+          <!-- memo 
+          etcで動的にstatus72のものだけ、リランボタンをAbleにする
+        　Rowデータはサーバサイドでセットする、それ以外のステータスは一旦
+
+        　検討
+        　画面がリフレッシュしないと使いずらい。
+        　当然リラン前にステータスチェックは行うが要検討
+        　定期的に画面リフレッシュかけようかなぁ、サーバサイドレンダリングはめんどい。
+        　-->
+          <!-- ectテンプレートひながた、これいけるかなぁ・・・微妙 -->
+          
+          <% for v in @tables : %>
+          <%- "<tr>" %>
+          <%- "<td>" %>
+          <%= v.id %>
+          <%- "</td>" %>
+          <% if v.status=="72": %>
+          <% @key = "abled" %>
+          <% else: %>
+          <% @key = "disabled" %>
+          <% end %>
+          <%- "<td><input type='button' id=" %>
+          <%= v.table_name %>
+          <%- " value='reRun' onclick='rerun(this)' " %>
+          <%= @key %>
+          <%- "/></td>" %> 
+          <%- "<td>" %>
+          <%= v.table_name %>
+          <%- "</td>" %>
+
+          <%- "<td>" %>
+          <%= v.status %>
+          <%- "</td>" %>
+          
+          <%- "<td>" %>
+          <%= v.job_date %>
+          </td>
+          <%- "</tr>" %>
+          <% end %>
+        </tbody>
+      </table>>
+    </div>
+  </body>
+</html>
